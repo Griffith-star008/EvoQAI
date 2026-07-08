@@ -5,9 +5,9 @@ class DynamicRepresentationLearning:
     """
     Upgrade 7: Dynamic Quantum Representation
     Automatically searches and generates the optimal quantum embedding (encoding)
-    based on the raw data characteristics (e.g. dimensionality, sparsity).
+    based on the raw data characteristics (e.g. dimensionality, sparsity, variance).
     
-    Supported: Angle, Amplitude, Basis, IQP, Data Re-uploading.
+    Supported: Angle, Amplitude, Basis, IQP, DataReuploading, FourierDataReuploading.
     """
     def __init__(self):
         self.supported_encodings = [
@@ -15,7 +15,8 @@ class DynamicRepresentationLearning:
             "AmplitudeEncoding", 
             "BasisEncoding", 
             "IQPEncoding", 
-            "DataReuploading"
+            "DataReuploading",
+            "FourierDataReuploading" # Advanced Non-linear QML Encoding
         ]
 
     def search_optimal_encoding(self, raw_data: np.ndarray) -> str:
@@ -28,10 +29,16 @@ class DynamicRepresentationLearning:
         # Sparsity: how many zeros?
         sparsity = 1.0 - (np.count_nonzero(raw_data) / max(dim, 1))
         
-        print(f"\n[Representation Engine] Analyzing data: Dim={dim}, Sparsity={sparsity:.2f}")
+        # Variance: how much fluctuation (non-linearity) is in the data?
+        variance = float(np.var(raw_data)) if dim > 1 else 0.0
+        
+        print(f"\n[Representation Engine] Analyzing data: Dim={dim}, Sparsity={sparsity:.2f}, Variance={variance:.2f}")
         
         # Heuristic rules for encoding selection
-        if dim > 16 and sparsity < 0.2:
+        if variance > 5.0 and dim <= 8:
+            encoding = "FourierDataReuploading" # Universal function approximator for complex non-linear data
+            print("[Representation Engine] High variance detected. Activating advanced Fourier Data Re-uploading for universal approximation.")
+        elif dim > 16 and sparsity < 0.2:
             encoding = "AmplitudeEncoding" # Best for dense, high-dimensional data
         elif sparsity > 0.8:
             encoding = "BasisEncoding" # Best for sparse, boolean-like data
@@ -47,10 +54,11 @@ class DynamicRepresentationLearning:
         """
         Simulates embedding classical data into a quantum state vector based on the encoding.
         """
-        # Mocking the generated state size based on encoding
         if encoding == "AmplitudeEncoding":
-            # Requires log2(N) qubits, state vector size is N
             size = max(4, int(2**np.ceil(np.log2(len(raw_data)))))
+        elif encoding == "FourierDataReuploading":
+            # Requires deep repeating layers, state vector is highly entangled
+            size = max(8, int(2**len(raw_data)))
         else:
             # Angle/Basis requires N qubits, state vector size is 2^N
             size = max(4, int(2**len(raw_data)))
