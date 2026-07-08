@@ -18,11 +18,12 @@ from core.knowledge.knowledge_graph import QuantumKnowledgeGraph
 from core.self_awareness.self_diagnosis import SelfDiagnosis
 from core.digital_twin.simulator import DigitalTwinSimulator
 from core.explainability.explainer import ExplainableRuntime
+from core.compiler.adaptive_compiler import AdaptiveQuantumCompiler
 
 class AutonomousQuantumOS:
     """
     Upgrade 15: The Final OS Kernel integrating Cognition, Knowledge, 
-    Self-Awareness, Digital Twin, Explainability, and Execution.
+    Self-Awareness, Digital Twin, Explainability, Compiler, and Execution.
     """
     def __init__(self):
         print("Booting AutoQuaHPC v2.0 Kernel...")
@@ -39,6 +40,7 @@ class AutonomousQuantumOS:
         self.self_awareness = SelfDiagnosis()
         self.digital_twin = DigitalTwinSimulator()
         self.explainer = ExplainableRuntime()
+        self.compiler = AdaptiveQuantumCompiler()
 
     def handle_iot_request(self, raw_sensor_data: dict, hardware_state: dict):
         print("\n" + "="*50)
@@ -73,8 +75,9 @@ class AutonomousQuantumOS:
         if not is_safe:
             return
             
-        # 6. Execution
-        state_vector = self.runtime.execute_circuit(self.evolution_framework.current_ir)
+        # 6. Compilation & Execution
+        optimized_ir = self.compiler.compile_circuit(self.evolution_framework.current_ir, context)
+        state_vector = self.runtime.execute_circuit(optimized_ir)
         
         # 7. Self-Awareness & Reflection
         simulated_accuracy = 0.85 # Mocked for demonstration
