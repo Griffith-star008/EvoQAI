@@ -1,0 +1,11 @@
+# Quantum & Data Science Core
+numpy>=1.23.0
+scipy>=1.9.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Future dependencies for Hybrid QML (To be integrated in Year 2)
+# torch>=2.0.0
+# pennylane>=0.30.0
+# qiskit>=0.43.0
