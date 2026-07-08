@@ -19,6 +19,7 @@ from core.self_awareness.self_diagnosis import SelfDiagnosis
 from core.digital_twin.simulator import DigitalTwinSimulator
 from core.explainability.explainer import ExplainableRuntime
 from core.compiler.adaptive_compiler import AdaptiveQuantumCompiler
+from agents.research_agent import AutonomousResearchAgent
 
 class AutonomousQuantumOS:
     """
@@ -41,6 +42,7 @@ class AutonomousQuantumOS:
         self.digital_twin = DigitalTwinSimulator()
         self.explainer = ExplainableRuntime()
         self.compiler = AdaptiveQuantumCompiler()
+        self.research_agent = AutonomousResearchAgent(self)
 
     def handle_iot_request(self, raw_sensor_data: dict, hardware_state: dict):
         print("\n" + "="*50)
@@ -102,3 +104,6 @@ if __name__ == "__main__":
     for i in range(2):
         sensor_data = {"temperature": 90.0, "vibration": 2.1, "latency_ms": 20}
         os_kernel.handle_iot_request(sensor_data, hw_state)
+        
+    # Trigger Autonomous Research Agent
+    os_kernel.research_agent.conduct_research_cycle()
