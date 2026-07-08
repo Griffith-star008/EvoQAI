@@ -1,0 +1,5 @@
+C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/CMakeFiles/qhpc_core.dir
+C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/CMakeFiles/qhpc_py.dir
+C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/CMakeFiles/INSTALL.dir
+C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/CMakeFiles/ZERO_CHECK.dir
