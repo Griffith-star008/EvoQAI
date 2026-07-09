@@ -1,0 +1,39 @@
+{
+  "experiment": "AQII_Category_K",
+  "timestamp": "2026-07-09T18:52:49.942005",
+  "sample_size": {
+    "aqip": 50,
+    "baseline": 50
+  },
+  "aqip": {
+    "mean": 85.9309,
+    "median": 86.2526,
+    "std": 1.93,
+    "variance": 3.7249,
+    "ci_95": [
+      85.3959,
+      86.4658
+    ]
+  },
+  "baseline": {
+    "mean": 11.2093,
+    "median": 11.2527,
+    "std": 1.1358,
+    "variance": 1.2901,
+    "ci_95": [
+      10.8945,
+      11.5242
+    ]
+  },
+  "effect_size": {
+    "cohens_d": 47.1875,
+    "interpretation": "Large"
+  },
+  "anova": {
+    "F_statistic": 55666.5085,
+    "df_between": 1,
+    "df_within": 98,
+    "SS_between": 139582.68,
+    "SS_within": 245.7331
+  }
+}
