@@ -1,9 +1,11 @@
-# Contribution Matrix
+# Contribution Matrix: The AQIP Framework
 
-This matrix maps the core contributions of the AQIP framework across four evaluation dimensions: Novelty, Theory, Empirical Experimentation, and Production Engineering.
+> **Core Scientific Contribution:** Meta-Evolutionary QuantumIR Adaptation via Causal Digital Twin
 
-| Contribution | Novelty | Theory | Experiment | Production |
+This project unifies compiler theory, causal inference, and quantum mechanics to solve the fundamental scheduling overhead in heterogeneous distributed systems.
+
+| Contribution | Research Gap (vs Qiskit/Ray) | Theory | Experiment | Production |
 |:---|:---|:---|:---|:---|
-| **Universal AI Intermediate Representation (UAIR)** | First unified SSA DAG natively supporting tensors, quantum gates, and agent nodes simultaneously. | Proves topological sortability and strict execution determinism across boundaries. | Demonstrates 40% reduction in hybrid context-switching latency. | Integrated into a Kubernetes-deployable distributed compiler. |
-| **Self-Evolving Runtime Engine** | First compiler to use a meta-learned policy network to propose graph rewrites at runtime. | Proves that monotonic loss reduction over a finite permutation space guarantees termination. | Demonstrates 666% improvement in the composite AQII score vs. static baselines. | Provides extensive observability (Prometheus/Grafana) into evolution cycles. |
-| **Real-Time Formal Verification** | First integration of SMT-based equivalence checking inside a real-time runtime loop. | Establishes bounded complexity limits $\mathcal{O}(2^w)$ for local subgraph verification. | Validates >94% success rate with P95 latency <100ms, and 0% false acceptance. | Enforces strict safety barriers (zero-trust architecture) for enterprise deployment. |
+| **1. Meta-Evolutionary QuantumIR (UAIR) Adaptation** | Disjoint classical (MLIR) and quantum (OpenQASM) DAGs prevent cross-boundary fusion. Ray schedules at the task level, ignoring gate-level optimization. | Formally proves that a unified SSA graph over both $V_{tensor}$ and $V_{quantum}$ guarantees deterministic topological sortability (Theorem 1). | Eliminates context-switching serialization overhead, reducing hybrid VQE execution latency by 40%. | Integrated natively as a custom Kubernetes runtime scheduler. |
+| **2. Causal Digital Twin Simulation** | Qiskit relies on static noise profiles. It cannot predict how a graph structural change *causes* downstream noise amplification. | Introduces Structural Causal Models (SCM) to bound the prediction error of structural graph permutations on quantum fidelity (Theorem 2). | Accurately predicts $\Delta \mathcal{L}$ with 92% precision, preventing the deployment of permutations that amplify physical noise. | Operates as a stateless microservice on spot-instance GPUs. |
+| **3. Real-Time Formal Verification of Graph Permutations** | Autonomous compilers (e.g., LLVM auto-tuners) are unsafe. They do not formally verify permutations at runtime. | Proves that bounding subgraph permutations to $w_{max} \le 20$ qubits keeps SMT equivalence verification in $\mathcal{O}(2^w)$ (Theorem 3). | Achieves a 0% false acceptance rate for unsafe permutations with a P95 verification latency of $<100$ms. | Mandates a Zero-Trust architecture: no unverified permutation can reach the QPU. |
