@@ -17,5 +17,10 @@ Given a monotonic evolution operator $\mathbb{E}$ that only applies structural p
 3. Therefore, the sequence of loss values $\mathcal{L}_0, \mathcal{L}_1, \dots, \mathcal{L}_k$ is strictly decreasing and bounded below by $0$.
 4. By the Monotone Convergence Theorem for bounded discrete sequences, the sequence must converge to a stationary point (local optimum).
 
-## 3. Complexity Bound (Theorem 2)
-The cost of evaluating a proposed runtime evolution (Meta-Learning phase) is bounded by $\mathcal{O}(|V| \log |V|)$ where $|V|$ is the number of nodes in the Universal AI Intermediate Representation (UAIR) graph.
+## 4. Complexity Constraints (Theorem 2)
+The cost of evaluating a proposed runtime evolution (Meta-Learning phase) is bounded strictly by structural parameters of the Universal AI Intermediate Representation (UAIR) graph $\mathcal{G} = \langle \mathcal{V}, \mathcal{E} \rangle$.
+
+- **Time Complexity:** $\mathcal{O}(|\mathcal{V}| \log |\mathcal{V}|)$ — Searching for valid subgraph fusions (e.g., Quantum parameterized gates with tensor biases) utilizes a sorting pass over topologically ordered nodes.
+- **Space Complexity:** $\mathcal{O}(|\mathcal{V}| + |\mathcal{E}|)$ — Memory required to maintain the digital twin projection of the DAG during verification.
+- **Communication Complexity:** $\mathcal{O}(K \cdot \log |\mathcal{V}|)$ — For $K$ distributed agents attempting consensus on a policy update.
+- **Quantum Complexity:** $\mathcal{O}(\text{depth} \cdot 2^{w})$ — Where $w$ is the localized qubit width of the fusion block, isolated from the global state tensor to prevent exponential explosion during compile-time verification.
