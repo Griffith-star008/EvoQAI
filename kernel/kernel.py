@@ -3,69 +3,81 @@ import os
 
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
+from core.identity.identity_engine import IdentityEngine
+from core.planner.goal_manager import GoalManager
+from core.world_model.predictive_model import WorldModel
+from core.reasoning.causal_discovery import CausalDiscoveryEngine
+from core.runtime.economics import RuntimeEconomics
 from core.belief.belief_manager import BeliefManager
 from core.reflection.reflection_manager import ReflectionEngine
-from knowledge.memory.memory_manager import HierarchicalMemory
-from core.world_model.predictive_model import WorldModel
-from core.self_theorizing.hypothesis_generator import HypothesisGenerator
-from core.explainability.explainer import ExplainableRuntime
 
-class MultiAgentAQIPKernel:
+class ScientificAQIPKernel:
     """
-    Layer 13: Multi-Agent AQIP Coordinator (v4.0 Final)
-    Coordinates Belief, Reflection, World Model, Knowledge, and Execution.
+    Layer: Unified Mathematical Kernel (v5.0 Research Refactoring)
+    Implements the mathematical tuple: AQIP(t) = {S, K, B, G, W, pi, R, A, T, J}
     """
     def __init__(self):
-        print("Booting AQIP v4.0 Multi-Agent Cognitive Kernel...")
+        print("Booting AQIP v5.0 Scientific Mathematical Kernel...")
         
-        self.world_model = WorldModel()
-        self.belief_manager = BeliefManager()
-        self.reflection_engine = ReflectionEngine()
-        self.memory = HierarchicalMemory()
-        self.theorizer = HypothesisGenerator()
-        self.explainer = ExplainableRuntime()
+        self.identity = IdentityEngine()       # I(t)
+        self.goal_manager = GoalManager()      # G(t) & U(t)
+        self.world_model = WorldModel()        # W(t)
+        self.causal_engine = CausalDiscoveryEngine()
+        self.economics = RuntimeEconomics()    # C(t)
+        self.belief = BeliefManager()          # B(t)
+        self.reflection = ReflectionEngine()   # R(t)
 
-    def run_cognitive_loop(self, environment_state: dict):
-        print("\n" + "="*70)
-        print(" [AQIP KERNEL v4.0] INITIATING UNIFIED COGNITIVE LOOP")
-        print("="*70)
+    def execute_cognitive_equation(self, S_t: dict):
+        """
+        Executes the continuous mathematical loop of Autonomous Quantum Intelligence.
+        """
+        print("\n" + "="*80)
+        print(" [AQIP KERNEL v5.0] INITIATING MATHEMATICAL COGNITIVE EQUATION")
+        print("="*80)
         
-        # 1. Predict Future State
-        future_state = self.world_model.predict_future_state(environment_state)
+        # 1. Update Identity I(t)
+        I_t = self.identity.update_identity(S_t)
         
-        # 2. Check Belief State
-        self.belief_manager.print_belief_state()
+        # 2. Formulate Goal G(t)
+        self.goal_manager.set_goal_from_identity(I_t)
         
-        # Simulate selecting Cloud_MPS which currently has low/uncertain belief
-        strategy = "Cloud_MPS"
-        confidence = self.belief_manager.get_confidence(strategy)
-        print(f"[Kernel] Selected Strategy: {strategy} with Confidence {confidence*100:.1f}%")
+        # 3. World Model Prediction W(t)
+        W_t = self.world_model.predict_future_state(S_t)
         
-        # 3. Simulate a Catastrophic Failure on Cloud_MPS due to latency
-        print("\n[Runtime] Executing Strategy...")
-        simulated_outcome = 0.2 # Failure!
+        # 4. Strategy Selection based on Belief B(t)
+        self.belief.print_belief_state()
+        strategy = "Cloud_MPS" # Simulated selection
         
-        # 4. Update Belief (Bayesian Decay)
-        self.belief_manager.update_belief(strategy, success=False)
-        self.belief_manager.print_belief_state()
+        # 5. Runtime Economics C(t)
+        C_t = self.economics.calculate_cost(strategy, circuit_depth=6)
         
-        # 5. Reflect & Auto-Mutate Knowledge Graph
-        directive = self.reflection_engine.perform_hindsight_analysis(strategy, simulated_outcome, environment_state)
+        # 6. Execution & Intervention (Causal Discovery)
+        simulated_perf_drop = 0.3 # Simulate failure
+        intervened_strategy = self.causal_engine.perform_intervention(strategy, simulated_perf_drop)
         
-        if directive["action"] == "DELETE_KNOWLEDGE":
-            # Simulate deleting from procedural memory
-            if strategy in self.memory.procedural_memory:
-                del self.memory.procedural_memory[strategy]
-            print(f"[Kernel] Executed Directive: Purged '{directive['target']}' from active policy.")
+        if intervened_strategy != strategy:
+            # Re-evaluate Economics for new strategy
+            C_t_new = self.economics.calculate_cost(intervened_strategy, circuit_depth=6)
             
-        # 6. Self-Theorizing
-        self.theorizer.generate_hypothesis(failures=5, context="LATENCY")
-        
-        print("="*70 + "\n")
+            # Simulate execution of new strategy
+            perf_original = 0.4
+            perf_intervened = 0.85
+            
+            self.causal_engine.deduce_causality(perf_original, perf_intervened)
+            
+            # 7. Calculate Final Utility U(t)
+            metrics = {"accuracy": perf_intervened, "energy_efficiency": 1.0 - (C_t_new/20.0), "adaptability": 1.0}
+            U_t = self.goal_manager.calculate_utility(metrics)
+            
+            # 8. Update Belief & Reflect
+            self.belief.update_belief(intervened_strategy, success=True)
+            self.reflection.perform_hindsight_analysis(intervened_strategy, perf_intervened, S_t)
+
+        print("="*80 + "\n")
 
 if __name__ == "__main__":
-    kernel = MultiAgentAQIPKernel()
+    kernel = ScientificAQIPKernel()
     
-    # Force a scenario where Cloud backend fails due to high latency/noise
-    env_state = {"temperature": 40.0, "vibration": 1.0, "latency": "CRITICAL"}
-    kernel.run_cognitive_loop(env_state)
+    # State S(t) with critical battery
+    S_t = {"temperature": 35.0, "battery_level": 15.0, "vibration": 0.2}
+    kernel.execute_cognitive_equation(S_t)
