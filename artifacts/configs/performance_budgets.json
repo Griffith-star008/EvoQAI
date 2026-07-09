@@ -1,0 +1,28 @@
+{
+  "budgets": [
+    {
+      "metric": "evolution_cycle_latency_ms",
+      "threshold": 50.0,
+      "severity": "WARNING",
+      "description": "A single Propose->Verify->Deploy cycle should take < 50ms to maintain real-time constraints."
+    },
+    {
+      "metric": "smt_verification_timeout_rate",
+      "threshold": 0.05,
+      "severity": "CRITICAL",
+      "description": "More than 5% verification timeouts indicates subgraph bounds (w_max) are too large."
+    },
+    {
+      "metric": "memory_overhead_mb",
+      "threshold": 512.0,
+      "severity": "WARNING",
+      "description": "The runtime engine itself should not consume more than 512MB."
+    },
+    {
+      "metric": "aqii_convergence_cycles",
+      "threshold": 25,
+      "severity": "INFO",
+      "description": "The system should reach local optimum within 25 cycles."
+    }
+  ]
+}
