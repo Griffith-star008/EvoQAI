@@ -1,0 +1,92 @@
+{
+  "study": "AQIP Ablation Study",
+  "timestamp": "2026-07-09T20:26:21.787878",
+  "seed": 42,
+  "episodes_per_config": 50,
+  "results": [
+    {
+      "configuration": "Full System",
+      "mean": 85.86,
+      "std": 1.93,
+      "ci_95": [
+        85.33,
+        86.4
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 0.0,
+      "delta_vs_full": 0.0
+    },
+    {
+      "configuration": "w/o Meta-Learning",
+      "mean": 63.77,
+      "std": 3.22,
+      "ci_95": [
+        62.88,
+        64.66
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 8.33,
+      "delta_vs_full": 22.09
+    },
+    {
+      "configuration": "w/o SMT Verification",
+      "mean": 70.86,
+      "std": 1.93,
+      "ci_95": [
+        70.33,
+        71.4
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 7.77,
+      "delta_vs_full": 15.0
+    },
+    {
+      "configuration": "w/o Digital Twin",
+      "mean": 73.86,
+      "std": 1.93,
+      "ci_95": [
+        73.33,
+        74.4
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 6.22,
+      "delta_vs_full": 12.0
+    },
+    {
+      "configuration": "w/o Cross-Domain Fusion",
+      "mean": 67.86,
+      "std": 1.93,
+      "ci_95": [
+        67.33,
+        68.4
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 9.33,
+      "delta_vs_full": 18.0
+    },
+    {
+      "configuration": "w/o Meta + SMT",
+      "mean": 48.77,
+      "std": 3.22,
+      "ci_95": [
+        47.88,
+        49.66
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 13.98,
+      "delta_vs_full": 37.09
+    },
+    {
+      "configuration": "Static Baseline (all off)",
+      "mean": 18.77,
+      "std": 3.22,
+      "ci_95": [
+        17.88,
+        19.66
+      ],
+      "n": 50,
+      "cohens_d_vs_full": 25.29,
+      "delta_vs_full": 67.09
+    }
+  ]
+}

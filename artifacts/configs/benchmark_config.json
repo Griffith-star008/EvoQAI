@@ -1,0 +1,44 @@
+{
+  "experiment_suite": "AQIP Full Benchmark v10.0",
+  "description": "Master configuration for reproducing all published results.",
+  "global": {
+    "random_seeds": {"numpy": 42, "torch": 42, "qiskit": 42},
+    "repetitions": 50,
+    "confidence_level": 0.95,
+    "timeout_ms": 100
+  },
+  "evolution": {
+    "w_max": 20,
+    "max_cycles": 100,
+    "policy_network": {
+      "hidden_dim": 128,
+      "learning_rate": 0.001,
+      "optimizer": "Adam",
+      "update_interval": 5
+    },
+    "loss_weights": {
+      "alpha_task": 0.30,
+      "beta_latency": 0.20,
+      "gamma_memory": 0.15,
+      "delta_energy": 0.10,
+      "epsilon_security": 0.05,
+      "zeta_comm": 0.08,
+      "eta_reliability": 0.05,
+      "theta_hardware": 0.05,
+      "iota_noise": 0.02
+    }
+  },
+  "benchmarks": {
+    "workloads": ["vqe_h2", "qml_mnist", "hybrid_transformer", "distributed_dag_100k"],
+    "cluster_sizes": [1, 4, 8, 16, 32],
+    "hardware_targets": ["cpu_only", "gpu_a100", "qpu_eagle"]
+  },
+  "ablation": {
+    "components_to_disable": [
+      "meta_learning",
+      "smt_verification",
+      "digital_twin",
+      "cross_domain_fusion"
+    ]
+  }
+}

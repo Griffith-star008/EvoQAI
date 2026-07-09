@@ -1,0 +1,81 @@
+{
+  "study": "Sensitivity Analysis",
+  "timestamp": "2026-07-09T20:26:21.789878",
+  "results": [
+    {
+      "parameter": "alpha",
+      "perturbation_factor": 0.8,
+      "aqii_mean": 84.86
+    },
+    {
+      "parameter": "alpha",
+      "perturbation_factor": 0.9,
+      "aqii_mean": 85.92
+    },
+    {
+      "parameter": "alpha",
+      "perturbation_factor": 1.0,
+      "aqii_mean": 86.29
+    },
+    {
+      "parameter": "alpha",
+      "perturbation_factor": 1.1,
+      "aqii_mean": 87.05
+    },
+    {
+      "parameter": "alpha",
+      "perturbation_factor": 1.2,
+      "aqii_mean": 87.08
+    },
+    {
+      "parameter": "beta",
+      "perturbation_factor": 0.8,
+      "aqii_mean": 85.07
+    },
+    {
+      "parameter": "beta",
+      "perturbation_factor": 0.9,
+      "aqii_mean": 85.66
+    },
+    {
+      "parameter": "beta",
+      "perturbation_factor": 1.0,
+      "aqii_mean": 86.14
+    },
+    {
+      "parameter": "beta",
+      "perturbation_factor": 1.1,
+      "aqii_mean": 86.13
+    },
+    {
+      "parameter": "beta",
+      "perturbation_factor": 1.2,
+      "aqii_mean": 86.79
+    },
+    {
+      "parameter": "gamma",
+      "perturbation_factor": 0.8,
+      "aqii_mean": 85.08
+    },
+    {
+      "parameter": "gamma",
+      "perturbation_factor": 0.9,
+      "aqii_mean": 85.63
+    },
+    {
+      "parameter": "gamma",
+      "perturbation_factor": 1.0,
+      "aqii_mean": 85.61
+    },
+    {
+      "parameter": "gamma",
+      "perturbation_factor": 1.1,
+      "aqii_mean": 85.92
+    },
+    {
+      "parameter": "gamma",
+      "perturbation_factor": 1.2,
+      "aqii_mean": 86.95
+    }
+  ]
+}
