@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  aqip-kernel-master:
+    image: python:3.11-slim
+    command: python /app/src/runtime/legacy_kernel/kernel.py
+    volumes:
+      - .:/app
+    environment:
+      - ROLE=MASTER
+      - DEPLOYMENT=DISTRIBUTED
+
+  aqip-agent-worker-1:
+    image: python:3.11-slim
+    command: python /app/src/agents/hierarchy.py
+    volumes:
+      - .:/app
+    environment:
+      - ROLE=WORKER
+      - REGION=US-EAST
+
+  aqip-agent-worker-2:
+    image: python:3.11-slim
+    command: python /app/src/agents/hierarchy.py
+    volumes:
+      - .:/app
+    environment:
+      - ROLE=WORKER
+      - REGION=EU-WEST
+
+  # Redis for Distributed Memory & Graph State
+  aqip-distributed-memory:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
