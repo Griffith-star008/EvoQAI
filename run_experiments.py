@@ -2,62 +2,59 @@ import matplotlib.pyplot as plt
 from src.evoqai.quantum.vqc import AdaptiveVQC
 from src.evoqai.data.drift_generator import SEAStreamGenerator
 from src.evoqai.engine.adaptive_runner import AdaptiveEngine
+from src.evoqai.world_model.causal_twin import CausalDigitalTwin
 import os
 
-def run_experiment():
-    print("Starting EvoQAI Phase 1: Evolutionary Quantum Circuit Adaptation under Concept Drift")
-    
-    # Initialize components
+def run_pipeline(is_safe_mode: bool, base_noise=0.15, threshold=0.55):
     n_qubits = 3
-    model = AdaptiveVQC(n_qubits=n_qubits, n_layers=1)
+    model = AdaptiveVQC(n_qubits=n_qubits, n_layers=1, base_noise_rate=base_noise)
     stream = SEAStreamGenerator(noise_percentage=0.05)
-    engine = AdaptiveEngine(model, lr=0.1, window_size=20)
+    twin = CausalDigitalTwin(base_noise_rate=base_noise, noise_threshold=threshold)
+    engine = AdaptiveEngine(model, causal_twin=twin, lr=0.1, window_size=20, is_safe_mode=is_safe_mode)
     
     epochs = 150
     batch_size = 16
-    
     accuracies = []
-    circuit_depths = []
     
     for epoch in range(epochs):
-        # Trigger sudden concept drift at epoch 75
-        if epoch == 75:
-            print(f"\n[Epoch 75] TRIGGERING SUDDEN CONCEPT DRIFT")
+        # Trigger continuous drifts
+        if epoch == 50:
+            stream.trigger_drift(new_threshold=11.0)
+        if epoch == 100:
             stream.trigger_drift(new_threshold=14.0)
             
         x, y = stream.get_batch(batch_size)
         loss, acc = engine.train_step(x, y)
-        
         accuracies.append(acc)
-        circuit_depths.append(model.n_layers)
         
-        if epoch % 10 == 0:
-            print(f"Epoch {epoch:3d} | Loss: {loss:.4f} | Acc: {acc:.2f} | Layers: {model.n_layers}")
-            
-    # Smoothing for plot
-    smoothed_acc = [sum(accuracies[i:i+10])/10 for i in range(len(accuracies)-10)]
+    return [sum(accuracies[i:i+10])/10 for i in range(len(accuracies)-10)]
+
+def run_experiment():
+    print("Starting Phase 2: Causal Digital Twin vs Unsafe Evolution")
+    
+    print("\n--- Running UNSAFE Evolution (Naive RL) ---")
+    unsafe_acc = run_pipeline(is_safe_mode=False)
+    
+    print("\n--- Running SAFE Evolution (Causal Digital Twin) ---")
+    safe_acc = run_pipeline(is_safe_mode=True)
     
     # Plotting
-    fig, ax1 = plt.subplots(figsize=(10, 5))
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(len(unsafe_acc)), unsafe_acc, color='red', label='Unsafe Evolution (Noise Collapse)')
+    plt.plot(range(len(safe_acc)), safe_acc, color='green', label='Safe Evolution (Causal Twin Guided)')
     
-    color = 'tab:blue'
-    ax1.set_xlabel('Streaming Batch (Epoch)')
-    ax1.set_ylabel('Accuracy', color=color)
-    ax1.plot(range(len(smoothed_acc)), smoothed_acc, color=color, label='VQC Accuracy')
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axvline(x=75, color='r', linestyle='--', label='Concept Drift (Epoch 75)')
+    plt.axvline(x=50, color='gray', linestyle='--', label='Drift 1')
+    plt.axvline(x=100, color='gray', linestyle='--', label='Drift 2')
     
-    ax2 = ax1.twinx()
-    color = 'tab:green'
-    ax2.set_ylabel('Circuit Depth (Layers)', color=color)
-    ax2.plot(range(epochs), circuit_depths, color=color, linestyle=':', label='Circuit Depth')
-    ax2.tick_params(axis='y', labelcolor=color)
+    plt.xlabel('Streaming Batch (Epoch)')
+    plt.ylabel('Accuracy')
+    plt.title('EvoQAI: Causal Twin prevents Hardware Noise Collapse')
+    plt.legend()
+    plt.tight_layout()
     
-    fig.tight_layout()
     os.makedirs('experiments/reports', exist_ok=True)
-    plt.title("EvoQAI: Quantum Circuit Evolution under Concept Drift")
-    plt.savefig('experiments/reports/drift_adaptation.png')
-    print("\nExperiment complete! Plot saved to experiments/reports/drift_adaptation.png")
+    plt.savefig('experiments/reports/causal_twin_adaptation.png')
+    print("\nExperiment complete! Plot saved to experiments/reports/causal_twin_adaptation.png")
 
 if __name__ == "__main__":
     run_experiment()

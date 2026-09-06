@@ -5,11 +5,12 @@ import numpy as np
 
 class AdaptiveEngine:
     """
-    Runs the online training loop.
-    Detects accuracy drops (Concept Drift) and triggers structural evolution on the VQC.
+    Online training loop with Safe Evolution.
     """
-    def __init__(self, model, lr=0.01, window_size=50):
+    def __init__(self, model, causal_twin=None, lr=0.1, window_size=20, is_safe_mode=True):
         self.model = model
+        self.causal_twin = causal_twin
+        self.is_safe_mode = is_safe_mode
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.loss_fn = nn.MSELoss()
         
@@ -26,7 +27,6 @@ class AdaptiveEngine:
         loss.backward()
         self.optimizer.step()
         
-        # Calculate accuracy (-1 or 1)
         preds = torch.sign(out)
         acc = (preds == y).float().mean().item()
         
@@ -40,18 +40,30 @@ class AdaptiveEngine:
 
     def _detect_and_adapt(self):
         """
-        Simple drift detection: If average accuracy over the window drops below 0.6,
-        we trigger a mutation (add a layer to increase capacity).
+        Drift detection and Safe Mutation.
         """
         if len(self.accuracy_history) == self.window_size:
             avg_acc = np.mean(self.accuracy_history)
+            
             if avg_acc < 0.60 and not self.drift_detected:
-                print(f"[AdaptiveEngine] Drift detected! Avg Acc: {avg_acc:.2f}. Mutating Circuit (Adding Layer)...")
-                self.model.add_layer()
-                # Reset optimizer state for new parameters
-                self.optimizer = optim.Adam(self.model.parameters(), lr=0.01)
-                # Flush history to allow recovery
+                print(f"[AdaptiveEngine {'SAFE' if self.is_safe_mode else 'UNSAFE'}] Drift detected! Avg Acc: {avg_acc:.2f}.")
+                
+                # Propose mutation
+                mutation_safe = True
+                if self.is_safe_mode and self.causal_twin is not None:
+                    mutation_safe = self.causal_twin.evaluate_mutation(self.model.n_layers, "add_layer")
+                    
+                if mutation_safe:
+                    print(f" -> Deploying Mutation (Adding Layer).")
+                    self.model.add_layer()
+                    self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
+                else:
+                    print(f" -> Mutation blocked by Causal Twin. Adapting via Learning Rate decay instead.")
+                    for g in self.optimizer.param_groups:
+                        g['lr'] = 0.01 # Fallback classical adaptation
+                        
                 self.accuracy_history = []
                 self.drift_detected = True
+                
             elif avg_acc > 0.80:
-                self.drift_detected = False # Reset flag when stable
+                self.drift_detected = False
