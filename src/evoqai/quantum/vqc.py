@@ -1,29 +1,62 @@
 import pennylane as qml
 import torch
 import torch.nn as nn
+import os
+from dotenv import load_dotenv
+
+# Load env variables for IBMQ
+load_dotenv('credentials.env')
 
 class AdaptiveVQC(nn.Module):
     """
     A Variational Quantum Circuit (VQC) in PyTorch.
-    Simulates physical quantum noise (Depolarization) based on circuit depth.
+    Supports dynamic backend switching (CPU, Aer, IBMQ Cloud).
     """
-    def __init__(self, n_qubits: int, n_layers: int = 1, base_noise_rate: float = 0.05):
+    def __init__(self, n_qubits: int, n_layers: int = 1, base_noise_rate: float = 0.05, backend: str = "default.qubit"):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_layers = n_layers
         self.base_noise_rate = base_noise_rate
-        self.device = qml.device("default.qubit", wires=n_qubits)
+        self.backend = backend
+        
+        self.device = self._initialize_device(backend, n_qubits)
         
         # Weights for parameterized layers
         self.weights = nn.Parameter(torch.randn(n_layers, n_qubits, 3))
-        self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint")
+        self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint" if backend=="default.qubit" else "parameter-shift")
+
+    def _initialize_device(self, backend: str, wires: int):
+        print(f"[Hardware] Initializing QPU Backend: {backend}")
+        if backend == "qiskit.ibmq":
+            token = os.getenv("IBM_QUANTUM_TOKEN")
+            if token and token != "your_ibm_quantum_token_here":
+                try:
+                    from qiskit_ibm_provider import IBMProvider
+                    IBMProvider.save_account(token, overwrite=True)
+                    provider = IBMProvider()
+                    return qml.device('qiskit.ibmq', wires=wires, backend='ibm_kyiv', provider=provider)
+                except Exception as e:
+                    print(f"Failed to connect to IBMQ: {e}. Falling back to qiskit.aer")
+                    return qml.device('qiskit.aer', wires=wires)
+            else:
+                print("No IBM Token found in credentials.env. Falling back to qiskit.aer")
+                return qml.device('qiskit.aer', wires=wires)
+                
+        elif backend == "qiskit.aer":
+            return qml.device('qiskit.aer', wires=wires)
+        else:
+            return qml.device("default.qubit", wires=wires)
+
+    def switch_backend(self, new_backend: str):
+        if self.backend != new_backend:
+            self.backend = new_backend
+            self.device = self._initialize_device(new_backend, self.n_qubits)
+            self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint" if new_backend=="default.qubit" else "parameter-shift")
 
     def _circuit(self, inputs, weights):
-        # Data Encoding
         for i in range(self.n_qubits):
             qml.RY(inputs[i], wires=i)
             
-        # Parameterized Layers
         for layer_idx in range(weights.shape[0]):
             for i in range(self.n_qubits - 1):
                 qml.CNOT(wires=[i, i+1])
@@ -42,9 +75,6 @@ class AdaptiveVQC(nn.Module):
         for i in range(batch_size):
             outputs[i] = self.qnode(x[i], self.weights)
             
-        # Physical Noise Simulation: Depth-induced Depolarization
-        # The fidelity decays exponentially with depth: f = (1 - p)^depth
-        # A depolarizing channel shrinks the expectation value towards 0.
         fidelity = (1.0 - self.base_noise_rate) ** self.n_layers
         outputs = outputs * fidelity
         
