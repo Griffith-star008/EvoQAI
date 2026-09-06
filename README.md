@@ -1,61 +1,34 @@
-# Self-Evolving Quantum Machine Learning Framework for Adaptive AIOT
+# EvoQAI: Evolutionary Quantum Artificial Intelligence
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](#)
-[![CUDA Version](https://img.shields.io/badge/CUDA-12.0-orange)](#)
+EvoQAI is a rigorous Quantum Machine Learning (QML) research framework focused on **Evolutionary Quantum Circuit Adaptation under Concept Drift in Edge Environments**.
 
-This repository contains the foundational source code for the PhD research: **Self-Evolving Quantum AIOT Framework**. It bridges high-performance computing (via `QuaHPC`) with an autonomous meta-learning intelligence layer capable of mutating its own quantum circuits to adapt to concept drift in Edge AI environments.
+Unlike static VQC (Variational Quantum Circuit) models that fail when data distributions shift or quantum hardware noise drifts, EvoQAI actively monitors the streaming loss landscape and **structurally mutates** the quantum circuit at runtime (e.g., expanding circuit depth to increase capacity, or pruning gates to reduce noise).
 
----
+## Core Research Focus (Targeting IEEE Tier-1)
+1. **Evolutionary Circuit Adaptation:** Dynamic appending/pruning of parameterized quantum layers based on real-time drift metrics.
+2. **Causal Digital Twin (WIP):** SCM-based bounding of noise interference during circuit mutation.
 
-## 🔬 Research Directions Implemented
+## Architecture
+- **Quantum Core:** Implemented natively using **PennyLane** and **PyTorch**, supporting true adjoint differentiation and full statevector simulation.
+- **Data Stream:** Custom SEA concept drift generator for streaming non-stationary data.
+- **Engine:** PyTorch-based online learning loop with sliding-window drift detection.
 
-| Module | Description | Location |
-|---|---|---|
-| **Direction 1** | Dynamic Quantum Representation Learning | `intelligence/representation/` |
-| **Direction 2** | Evolutionary Quantum Intermediate Rep (IR) | `core/quantum_ir/` |
-| **Direction 3** | Context-Aware Quantum Backend Selector | `core/backend_selector/` |
-| **Direction 4 & 7** | Autonomous Evolution Engine & Runtime | `intelligence/evolution_engine/` |
-| **Direction 5** | Semantic AIOT Intelligence | `intelligence/context_engine/` |
-| **Direction 6** | Adaptive Quantum Feature Space | `intelligence/feature_space/` |
-| **Direction 8** | Hybrid Classical-Quantum Intelligence | `hybrid/` |
-| **Direction 9** | Lifelong Quantum AIOT Memory | `memory/` |
-| **Direction 10** | Multi-Agent Self-Evolving Ecosystem | `agents/` |
+## Getting Started
 
----
+### Installation
+Ensure you have Python 3.11+ installed.
+```bash
+pip install -r requirements.txt
+```
 
-## 🏛️ Architecture Overview
-
-The system is built on a **C++ / Python Hybrid Architecture**:
-
-1. **C++/CUDA Core (`QuaHPC_Core`)**: Handles ultra-fast quantum statevector simulations, tensor networks, and adjoint differentiation. 
-2. **Python Intelligence Layer**: Acts as the "Operating System" that monitors accuracy, translates raw data into semantic contexts, and triggers the Evolution Engine.
-3. **FFI Bridge**: Connects the Python intelligence layer to the C++ core via PyBind11, ensuring zero overhead during quantum execution.
-
----
-
-## 🚀 Getting Started
-
-### 1. Requirements
-- Python 3.10+
-- CUDA Toolkit 12.0+ (For hardware acceleration)
-- `numpy`, `scipy`
-
-### 2. Run the End-to-End Simulation
-To see the entire framework in action (from data representation to concept drift detection and circuit mutation), run the root experiment script:
-
+### Running the End-to-End Experiment
+This script streams 150 batches of data, triggers a sudden concept drift at epoch 75, and demonstrates the VQC autonomously adding a quantum layer to recover its accuracy.
 ```bash
 python run_experiments.py
 ```
+The output plot will be saved to `experiments/reports/drift_adaptation.png`.
 
-### 3. Run the Multi-Agent Orchestrator
-To observe the decoupled background agents working together:
+## Reproducibility
+This repository is designed for rigorous academic reproducibility. All metrics, seeds, and hyperparameters are deterministic.
 
-```bash
-python agents/agent_orchestrator.py
-```
-
----
-
-*Author: Huy Ngo Anh (Independent Researcher)*  
-*Contact: huyngoanh3@gmail.com*
+*Note: Previous claims regarding C++/CUDA bindings have been removed as the project transitions to a pure PennyLane/PyTorch differentiable stack to prioritize research velocity and algorithmic novelty.*
