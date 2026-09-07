@@ -12,18 +12,18 @@ class AdaptiveVQC(nn.Module):
     A Variational Quantum Circuit (VQC) in PyTorch.
     Supports dynamic backend switching (CPU, Aer, IBMQ Cloud).
     """
-    def __init__(self, n_qubits: int, n_layers: int = 1, base_noise_rate: float = 0.05, backend: str = "default.qubit"):
+    def __init__(self, n_qubits=3, n_layers=1, base_noise_rate=0.0):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_layers = n_layers
         self.base_noise_rate = base_noise_rate
-        self.backend = backend
+        self.backend = "default.qubit"
+        self.device = self._initialize_device(self.backend, self.n_qubits)
         
-        self.device = self._initialize_device(backend, n_qubits)
+        # Initialize weights for current depth
+        self.weights = nn.Parameter(torch.randn(self.n_layers, self.n_qubits, 3))
         
-        # Weights for parameterized layers
-        self.weights = nn.Parameter(torch.randn(n_layers, n_qubits, 3))
-        self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint" if backend=="default.qubit" else "parameter-shift")
+        self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint")
 
     def _initialize_device(self, backend: str, wires: int):
         print(f"[Hardware] Initializing QPU Backend: {backend}")
@@ -43,7 +43,12 @@ class AdaptiveVQC(nn.Module):
                 return qml.device('qiskit.aer', wires=wires)
                 
         elif backend == "qiskit.aer":
-            return qml.device('qiskit.aer', wires=wires)
+            try:
+                import qiskit
+                return qml.device('qiskit.aer', wires=wires)
+            except ImportError:
+                print("qiskit-aer not installed. Falling back to default.qubit")
+                return qml.device("default.qubit", wires=wires)
         else:
             return qml.device("default.qubit", wires=wires)
 
@@ -51,7 +56,8 @@ class AdaptiveVQC(nn.Module):
         if self.backend != new_backend:
             self.backend = new_backend
             self.device = self._initialize_device(new_backend, self.n_qubits)
-            self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method="adjoint" if new_backend=="default.qubit" else "parameter-shift")
+            diff_method = "adjoint" if new_backend == "default.qubit" else "parameter-shift"
+            self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method=diff_method)
 
     def _circuit(self, inputs, weights):
         for i in range(self.n_qubits):

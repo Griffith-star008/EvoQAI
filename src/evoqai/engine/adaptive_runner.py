@@ -38,7 +38,15 @@ class AdaptiveEngine:
             battery_level=self.simulated_battery
         )
         
-        # 2. Forward & Backward Pass
+        target_qml_backend = "default.qubit"
+        if optimal_backend == "qpu_ibmq":
+            target_qml_backend = "qiskit.ibmq"
+        elif optimal_backend == "cloud_sim":
+            target_qml_backend = "qiskit.aer"
+            
+        if hasattr(self.model, 'backend') and self.model.backend != target_qml_backend:
+            print(f"[AdaptiveEngine] Routing execution to: {optimal_backend} (Battery: {self.simulated_battery:.2f}, Depth: {self.model.n_layers})")
+            self.model.switch_backend(target_qml_backend)
         self.model.train()
         self.optimizer.zero_grad()
         
