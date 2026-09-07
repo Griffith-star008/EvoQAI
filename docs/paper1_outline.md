@@ -4,39 +4,51 @@
 **Authors:** Huy Ngo Anh
 
 ## Abstract
-Quantum Machine Learning (QML) holds promise for edge computing environments due to its potential for high expressivity with fewer parameters. However, Artificial Intelligence of Things (AIoT) deployments suffer from severe non-stationarity and concept drift. Traditional Variational Quantum Circuits (VQCs) maintain static architectures, leading to catastrophic accuracy degradation when data distributions shift. In this paper, we propose an Evolutionary Quantum Artificial Intelligence (EvoQAI) framework that enables online, structural adaptation of VQCs. By continuously monitoring the streaming loss landscape via a sliding-window mechanism, EvoQAI dynamically mutates the quantum circuit topology—appending parameterized entangling layers to increase capacity during complex drifts. Extensive experiments on a streaming SEA-concept dataset demonstrate that EvoQAI autonomously recovers from concept drift, maintaining a 20-30% higher predictive accuracy compared to static classical and quantum baselines.
+Quantum Machine Learning (QML) presents a compelling paradigm for resource-constrained edge computing due to its highly expressive parameter spaces. However, edge data streams (AIoT) are inherently non-stationary and subject to sudden concept drift. Current Variational Quantum Circuits (VQCs) are architecturally static, leading to severe accuracy degradation when data distributions shift. In this paper, we propose EvoQAI (Evolutionary Quantum Artificial Intelligence), an online structural adaptation framework for QML. Instead of merely tuning weights, EvoQAI utilizes a sliding-window drift detector to dynamically inject parameterized entangling layers (structural mutation) into the VQC at runtime. We conduct a rigorous comparative analysis using the SEA streaming dataset. Our empirical results demonstrate that EvoQAI significantly accelerates recovery from concept drift—restoring predictive performance in 5 epochs compared to 12 epochs for static VQCs, yielding a post-drift accuracy improvement of 6.7%. While current classical Multilayer Perceptrons (MLPs) remain highly competitive on low-complexity datasets, our framework establishes a foundational proof-of-concept for autonomous architectural plasticity in quantum models, paving the way for adaptive quantum intelligence in dynamic environments.
 
 ## 1. Introduction
-- **Motivation:** Edge environments (IoT, AIoT) generate high-velocity streaming data subject to continuous distribution shifts (concept drift). Classical models often require heavy retraining. QML offers compact parameter spaces, but static VQC architectures lack the plasticity to adapt to new concepts on the fly.
-- **Problem Statement:** How can a quantum circuit structurally evolve in real-time to maintain predictive accuracy under sudden concept drift without requiring complete retraining from scratch?
+- **Motivation:** AIoT devices operate in highly dynamic environments. Concept drift renders static models obsolete. QML is promising for edge due to compact representation, but static VQCs lack architectural plasticity.
+- **Problem Statement:** Retraining VQCs from scratch is computationally prohibitive on Noisy Intermediate-Scale Quantum (NISQ) devices. How can a quantum circuit structurally evolve in real-time to maintain predictive accuracy?
 - **Contributions:**
-  1. We introduce a dynamic mutation operator for VQCs that can inject parameterized layers (RY, RZ, CNOT) at runtime.
-  2. We develop a sliding-window drift detection engine that triggers structural evolution when statistical accuracy bounds are violated.
-  3. We validate the framework on a rigorous streaming dataset, proving the superiority of evolutionary VQCs over static models.
+  1. We introduce a dynamic mutation operator for VQCs capable of adding/pruning parameterized layers at runtime using the PennyLane framework.
+  2. We integrate a sliding-window concept drift detector to trigger structural quantum evolution.
+  3. We provide a rigorous, fully reproducible comparative baseline against both static QML and classical online learning methods, frankly acknowledging current NISQ limitations while highlighting quantum plasticity.
 
 ## 2. Related Work
-- *Quantum Machine Learning on Edge:* Review of existing static VQC deployments.
-- *Concept Drift in Streaming Data:* Overview of ADWIN, DDM, and classical structural adaptation (e.g., dynamic neural networks).
-- *Evolutionary Quantum Architecture Search (EQAS):* Contrast existing offline EQAS (which requires massive simulation time) with our *online* evolutionary approach.
+- *Quantum Machine Learning on Edge:* Recent works (2024-2025) have explored static VQCs for IoT anomaly detection, but ignore non-stationary data streams.
+- *Concept Drift in Streaming Data:* ADWIN and DDM are gold standards in classical ML. Classical structural adaptation (e.g., dynamic neural networks) is well-studied, but its quantum analogue remains nascent.
+- *Evolutionary Quantum Architecture Search (EQAS):* Existing EQAS (2025-2026) operates offline, requiring massive computational overhead to search for optimal circuits. EvoQAI bridges this gap by operating *online* (during inference/training).
 
 ## 3. Methodology
-### 3.1 VQC Architecture and Online Learning
-Let $U(\theta)$ be a parameterized quantum circuit acting on an $N$-qubit state $|0\rangle^{\otimes N}$. The circuit consists of $L$ layers. In a streaming setting, the data arrives as tuples $(x_t, y_t)$. The parameters $\theta$ are updated via gradient descent (using parameter-shift or adjoint methods).
+### 3.1 Adaptive VQC Architecture
+Let $U(\theta)$ be a parameterized quantum circuit acting on an $n$-qubit state. We define a baseline circuit block consisting of angle embedding, full CNOT entanglement, and $RY, RZ$ parameterized rotations. 
 
-### 3.2 Drift Detection Engine
-We maintain a sliding window of the last $W$ classification accuracies. If the mean accuracy $\mu_W$ falls below a heuristic threshold $\tau_{drift}$, a concept drift is flagged.
+### 3.2 Online Learning and Drift Detection
+The model processes data $(x_t, y_t)$ in mini-batches. A sliding window of size $W=20$ tracks the mean classification accuracy $\mu_W$. If $\mu_W < \tau_{drift}$ (e.g., 0.60), a drift event is flagged.
 
-### 3.3 Structural Mutation Operator
-Upon detecting drift, the framework applies a *do-intervention* on the circuit depth $L \rightarrow L+1$. A new layer of entangling CNOT gates and rotation gates (RY, RZ) is initialized and concatenated to the existing circuit. The optimizer state is reset, allowing the new parameters to aggressively capture the shifted data distribution.
+### 3.3 Structural Mutation
+Upon drift detection, EvoQAI applies a *do-intervention* on the circuit depth $L \rightarrow L+1$. A new parameterized layer is initialized (using identity or small random weights) and concatenated to the circuit. The classical optimizer (Adam) is reset to allow aggressive exploration of the new loss landscape.
 
 ## 4. Experimental Evaluation
-### 4.1 Setup
-- **Dataset:** SEA Stream Generator (3 features, binary classification, 5% inherent noise). Sudden drift triggered at epoch 75.
-- **Environment:** PennyLane statevector simulator with PyTorch integration.
+### 4.1 Setup & Reproducibility
+- **Dataset:** SEA Stream Generator (3 features, binary classification, 5% noise). Sudden drift triggered at epoch 75.
+- **Hardware/Simulation:** PennyLane statevector simulator via PyTorch interface.
+- **Baselines:** (1) Static VQC, (2) Static Classical MLP, (3) Classical MLP + ADWIN Retraining. All experiments are averaged over 3 random seeds (42, 123, 999). Code is publicly available to ensure 100% reproducibility.
 
-### 4.2 Results
-*(Refer to `experiments/reports/drift_adaptation.png`)*
-At Epoch 75, the data boundary shifts significantly. The static baseline suffers a permanent accuracy drop from 94% to 50%. The EvoQAI engine detects this drop and injects a secondary layer. Within 40 epochs, the evolutionary VQC fully recovers to 81-100% accuracy, demonstrating superior plasticity.
+### 4.2 Results & Discussion
+*(Insert Table: Mean Accuracy and Recovery Time)*
+| Method | Mean Accuracy (Post-Drift) | Recovery Time (Epochs) |
+|--------|----------------------------|------------------------|
+| Static VQC | 73.2% | 12 |
+| Static MLP | 86.6% | 1 |
+| MLP + ADWIN | 86.6% | 1 |
+| **EvoQAI (Ours)**| **79.9%** | **5** |
 
-## 5. Conclusion
-We presented EvoQAI, an online evolutionary framework for QML. By granting structural plasticity to quantum circuits, we enable robust edge intelligence capable of surviving severe concept drift. Future work will investigate the impact of physical hardware noise on circuit depth constraints.
+*(Insert Figure: `baseline_comparison.png` showing Mean $\pm$ Std)*
+
+**Analysis:**
+1. **Quantum Plasticity:** EvoQAI successfully recovers from concept drift in 5 epochs, compared to the 12 epochs required by the Static VQC. The structural addition of a layer provides necessary capacity to capture the new data distribution, validating our core hypothesis.
+2. **Classical vs. Quantum Gap:** We transparently observe that on the low-complexity SEA dataset, the classical MLP converges faster and achieves higher absolute accuracy (86.6%). This highlights a known limitation in current NISQ algorithms regarding trainability (e.g., barren plateaus). However, EvoQAI narrows this gap significantly compared to static quantum approaches.
+
+## 5. Conclusion and Future Work
+EvoQAI demonstrates that structural architectural plasticity can be effectively integrated into online QML pipelines. While current classical methods remain highly competitive on simple datasets, our framework establishes a vital proof-of-concept for adaptive quantum intelligence. Future work will integrate Causal Digital Twins to bound the hardware noise penalties incurred by deep circuit evolution, pushing EvoQAI closer to physical deployment on IBM QPUs.
