@@ -8,25 +8,38 @@ Dynamic structural evolution of Variational Quantum Circuits (VQCs) is a powerfu
 
 ## 1. Introduction
 - **Motivation:** NISQ devices have strictly limited coherence times. While algorithmic evolution (adding layers) increases theoretical expressivity, it physically incurs exponential noise penalties. 
-- **Problem Statement:** Standard reinforcement learning or evolutionary algorithms operate blindly; they optimize for theoretical loss reduction without understanding physical hardware constraints.
+- **Problem Statement:** Standard evolutionary algorithms optimize for theoretical loss reduction blindly, without understanding physical hardware constraints.
 - **Contributions:**
-  1. We formulate the first Structural Causal Model (SCM) for NISQ hardware noise and algorithmic depth.
-  2. We propose a Safe Evolution algorithm that queries a Causal Digital Twin before deploying structural mutations.
+  1. We formulate the first Structural Causal Model (SCM) linking algorithmic depth to NISQ hardware noise.
+  2. We propose a Safe Evolution algorithm that queries a Causal Digital Twin using Judea Pearl's *do-calculus* before deploying structural mutations.
   3. We demonstrate through rigorous simulation that CDT intervention prevents catastrophic collapse under streaming concept drift.
 
-## 2. Methodology
-### 2.1 The Structural Causal Model (SCM)
-We define the system as a directed acyclic graph (DAG):
-$L \rightarrow N \rightarrow F$
-Where $L$ is the circuit layer count, $N$ is the physical noise channel (depolarization probability $p$), and $F$ is the observable fidelity.
+## 2. Structural Causal Model for NISQ Evolution
+### 2.1 The Causal Graph
+Let the system be defined by a directed acyclic graph (DAG) $\mathcal{G}$:
+$$ L \rightarrow N \rightarrow F $$
+Where:
+- $L$ (Depth): The number of parameterized entangling layers.
+- $N$ (Noise Channel): The aggregate physical noise (e.g., depolarizing probability $p$).
+- $F$ (Fidelity): The observable measurement fidelity of the quantum state.
 
-### 2.2 Fidelity Decay Equation
-For a global depolarizing channel, the expectation value decays as:
-$\mathbb{E}[Z_{noisy}] = (1 - p)^L \cdot \mathbb{E}[Z_{ideal}]$
-The Causal Digital Twin computes the predicted fidelity for a proposed mutation $do(L = l_{current} + 1)$.
+### 2.2 Formalizing the Intervention (Do-Calculus)
+During a concept drift event, the evolutionary engine proposes adding a layer. In causal inference terms, this is an intervention on the structural depth: $do(L = l + 1)$.
+We wish to estimate the expected fidelity under this intervention:
+$$ \mathbb{E}[F \mid do(L = l+1)] $$
+
+Assuming a global depolarizing channel $\mathcal{E}$ parameterized by single-layer error rate $p$, the expectation value of an observable $O$ (e.g., Pauli-Z) decays as:
+$$ \mathbb{E}[O_{noisy} \mid do(L)] = (1 - p)^L \cdot \mathbb{E}[O_{ideal}] $$
+
+The Causal Digital Twin computes this counterfactual fidelity.
 
 ### 2.3 Safe Evolutionary Protocol
-When a concept drift is detected, the Engine requests a mutation. The CDT evaluates the mutation. If the predicted fidelity $(1-p)^{L+1} < \tau_{safe}$, the mutation is rejected (labeled `UNSAFE`). The Engine falls back to adjusting the classical learning rate (decaying $\alpha$ to stabilize learning) rather than altering the quantum topology.
+Let $\tau_{safe}$ be the threshold fidelity required to maintain a signal-to-noise ratio sufficient for classification.
+The Causal Digital Twin (CDT) acts as a safety gate:
+1. Engine proposes mutation $do(L = l + 1)$.
+2. CDT evaluates: Is $\mathbb{E}[F \mid do(L = l+1)] \geq \tau_{safe}$?
+3. **If Safe:** Execute quantum structural mutation.
+4. **If Unsafe:** Reject quantum mutation. Fall back to classical adaptation (e.g., decaying learning rate $\alpha$ to stabilize existing weights).
 
 ## 3. Experimental Evaluation
 ### 3.1 Setup
