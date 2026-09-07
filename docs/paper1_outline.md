@@ -26,12 +26,16 @@ Let $U(\theta)$ be a parameterized quantum circuit acting on an $n$-qubit state.
 ### 3.2 Online Learning and Drift Detection
 The model processes data $(x_t, y_t)$ in mini-batches. A sliding window of size $W=20$ tracks the mean classification accuracy $\mu_W$. If $\mu_W < \tau_{drift}$ (e.g., 0.60), a drift event is flagged.
 
-### 3.3 Structural Mutation
-Upon drift detection, EvoQAI applies a *do-intervention* on the circuit depth $L \rightarrow L+1$. A new parameterized layer is initialized (using identity or small random weights) and concatenated to the circuit. The classical optimizer (Adam) is reset to allow aggressive exploration of the new loss landscape.
+### 3.3 Structural Mutation Library
+Upon drift detection, EvoQAI applies an architectural intervention. We maintain a library of mutation operators:
+1. **Layer Addition ($do(L \rightarrow L+1)$):** A new parameterized layer is initialized (using identity or small random weights) and concatenated to the circuit.
+2. **Layer Reinitialization (Fallback):** If adding a layer violates hardware bounds (predicted via the Causal Twin in Paper 2), the framework randomly reinitializes the parameters of the final layer to induce a catastrophic unlearning event, allowing the optimizer to rapidly escape barren plateaus and fit the new concept.
 
 ## 4. Experimental Evaluation
 ### 4.1 Setup & Reproducibility
-- **Dataset:** SEA Stream Generator (3 features, binary classification, 5% noise). Sudden drift triggered at epoch 75.
+- **Datasets:** We evaluate on two non-stationary data streams:
+  - **SEA Generator:** Linear decision boundary with sudden concept drift.
+  - **Sine Generator:** Highly non-linear decision boundary where drift occurs via rapid phase shifts. Both include 5% label noise.
 - **Hardware/Simulation:** PennyLane statevector simulator via PyTorch interface.
 - **Baselines:** (1) Static VQC, (2) Static Classical MLP, (3) Classical MLP + ADWIN Retraining. All experiments are averaged over 3 random seeds (42, 123, 999). Code is publicly available to ensure 100% reproducibility.
 

@@ -73,13 +73,15 @@ class AdaptiveEngine:
             mutation_safe = self.causal_twin.evaluate_mutation(self.model.n_layers, n_qubits, "add_layer")
             
         if mutation_safe:
-            print(f" -> Deploying Mutation (Adding Layer).")
-            if hasattr(self.model, 'add_layer'):
-                self.model.add_layer()
+            print(f" -> Deploying Mutation (add_layer).")
+            if hasattr(self.model, 'mutate'):
+                self.model.mutate("add_layer")
                 self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
         else:
-            print(f" -> Mutation blocked by Causal Twin SCM. Adapting via LR decay.")
+            print(f" -> add_layer blocked by Causal Twin SCM. Deploying fallback Mutation (reinit_layer).")
+            if hasattr(self.model, 'mutate'):
+                self.model.mutate("reinit_layer")
             for g in self.optimizer.param_groups:
-                g['lr'] = 0.01
+                g['lr'] = 0.05
                 
         self.drift_detector.reset()

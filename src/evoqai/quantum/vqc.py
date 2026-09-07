@@ -81,11 +81,26 @@ class AdaptiveVQC(nn.Module):
         return outputs
 
     def add_layer(self):
+        """Standard Phase 1 mutation: Add parameterized entanglement layer."""
+        new_weights = nn.Parameter(torch.randn(1, self.n_qubits, 3) * 0.1)
+        self.weights = nn.Parameter(torch.cat([self.weights, new_weights], dim=0))
+        self.n_layers += 1
+        
+    def reinitialize_layer(self, layer_idx=None):
+        """Structural reset mutation: Reset a layer to jump out of barren plateaus."""
+        if layer_idx is None:
+            layer_idx = self.n_layers - 1 # reset last layer
         with torch.no_grad():
-            new_layer = torch.randn(1, self.n_qubits, 3)
-            new_weights = torch.cat([self.weights.data, new_layer], dim=0)
-            self.weights = nn.Parameter(new_weights)
-            self.n_layers += 1
+            self.weights[layer_idx].normal_(mean=0.0, std=0.5)
+            
+    def mutate(self, mutation_type: str = "add_layer"):
+        """Dynamic architectural search mutation operator."""
+        if mutation_type == "add_layer":
+            self.add_layer()
+        elif mutation_type == "reinit_layer":
+            self.reinitialize_layer()
+        else:
+            raise ValueError(f"Unknown mutation type {mutation_type}")
 
     def remove_layer(self):
         if self.n_layers > 1:

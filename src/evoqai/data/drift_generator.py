@@ -34,3 +34,33 @@ class SEAStreamGenerator:
         X_scaled = X * (np.pi / 10.0)
         
         return torch.tensor(X_scaled, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+
+class SineStreamGenerator:
+    """
+    Sine Stream concept drift (Non-linear).
+    Features x1, x2 in [0, 1].
+    Label = 1 if x2 < sin(x1 * phase_shift) else 0.
+    Drift occurs by changing the phase_shift.
+    """
+    def __init__(self, noise_percentage=0.05):
+        self.noise_percentage = noise_percentage
+        self.phase_shift = 1.0
+        
+    def trigger_drift(self, new_phase_shift: float):
+        self.phase_shift = new_phase_shift
+        
+    def get_batch(self, batch_size: int):
+        X = np.random.rand(batch_size, 2)
+        y = (X[:, 1] < np.sin(X[:, 0] * np.pi * self.phase_shift)).astype(int)
+        
+        noise_idx = np.random.rand(batch_size) < self.noise_percentage
+        y[noise_idx] = 1 - y[noise_idx]
+        
+        X_scaled = X * np.pi
+        # Pad with 0 to match 3 qubits if needed, but we can just use 2 features for 2 qubits.
+        # For compatibility with 3-qubit VQC, we append a random or constant dimension
+        X_padded = np.zeros((batch_size, 3))
+        X_padded[:, :2] = X_scaled
+        
+        y_scaled = y * 2 - 1
+        return torch.tensor(X_padded, dtype=torch.float32), torch.tensor(y_scaled, dtype=torch.float32)
