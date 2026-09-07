@@ -12,7 +12,7 @@
         "recovery_time_epochs": 1
     },
     "EvoQAI": {
-        "mean_accuracy_post_drift": 0.7994230769230769,
-        "recovery_time_epochs": 5
+        "mean_accuracy_post_drift": 0.7326602564102564,
+        "recovery_time_epochs": 12
     }
 }

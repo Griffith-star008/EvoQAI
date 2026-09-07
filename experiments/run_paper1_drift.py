@@ -8,12 +8,12 @@ from src.evoqai.data.drift_generator import SEAStreamGenerator
 from src.evoqai.engine.adaptive_runner import AdaptiveEngine
 from src.evoqai.world_model.causal_twin import CausalDigitalTwin
 
-def run_pipeline(is_safe_mode: bool, base_noise=0.15, threshold=0.55):
+def run_pipeline(is_safe_mode: bool, gate_error=0.05, threshold=0.55):
     n_qubits = 3
-    model = AdaptiveVQC(n_qubits=n_qubits, n_layers=1, base_noise_rate=base_noise)
+    model = AdaptiveVQC(n_qubits=n_qubits, n_layers=1, base_noise_rate=gate_error)
     stream = SEAStreamGenerator(noise_percentage=0.05)
-    twin = CausalDigitalTwin(base_noise_rate=base_noise, noise_threshold=threshold)
-    engine = AdaptiveEngine(model, causal_twin=twin, lr=0.1, window_size=20, is_safe_mode=is_safe_mode)
+    twin = CausalDigitalTwin(gate_error_rate=gate_error, noise_threshold=threshold)
+    engine = AdaptiveEngine(model, causal_twin=twin, lr=0.1, is_safe_mode=is_safe_mode)
     
     epochs = 150
     batch_size = 16

@@ -1,1 +1,0 @@
-C:/Users/Lenovo/OneDrive/Desktop/QuaHPC/build/qhpc_core.dir/RelWithDebInfo/qhpc_c_api.obj

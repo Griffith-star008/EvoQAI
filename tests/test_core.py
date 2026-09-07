@@ -19,11 +19,10 @@ def test_vqc_mutation():
     assert vqc.n_layers == 2, "Mutation failed to add layer"
 
 def test_causal_twin_safety():
-    twin = CausalDigitalTwin(base_noise_rate=0.2, noise_threshold=0.5)
-    # (1 - 0.2)^2 = 0.64 (Safe)
-    assert twin.evaluate_mutation(current_layers=1, mutation_type="add_layer") == True
-    # (1 - 0.2)^4 = 0.4096 (Unsafe)
-    assert twin.evaluate_mutation(current_layers=3, mutation_type="add_layer") == False
+    twin = CausalDigitalTwin(gate_error_rate=0.2, noise_threshold=0.5)
+    # (1 - 0.2)^... evaluates internally
+    assert twin.evaluate_mutation(current_layers=1, n_qubits=3, mutation_type="add_layer") == True
+    assert twin.evaluate_mutation(current_layers=5, n_qubits=3, mutation_type="add_layer") == False
 
 def test_data_generator():
     stream = SEAStreamGenerator()

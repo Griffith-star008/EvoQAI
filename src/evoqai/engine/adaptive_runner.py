@@ -3,49 +3,40 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from src.evoqai.engine.backend_selector import BackendSelector
+from src.evoqai.engine.drift_detector import ADWINDriftDetector
 
 class AdaptiveEngine:
     """
     Online training loop with Safe Evolution and Context-Aware Backend Routing.
+    Uses ADWIN for statistically robust concept drift detection.
     """
-    def __init__(self, model, causal_twin=None, lr=0.1, window_size=20, is_safe_mode=True):
+    def __init__(self, model, causal_twin=None, lr=0.1, is_safe_mode=True):
         self.model = model
         self.causal_twin = causal_twin
         self.is_safe_mode = is_safe_mode
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
         self.loss_fn = nn.MSELoss()
         
-        self.window_size = window_size
-        self.accuracy_history = []
-        self.drift_detected = False
+        # Phase 4 Upgrade: Real ADWIN detector
+        self.drift_detector = ADWINDriftDetector(delta=0.1)
         
-        # Phase 3: Hardware router
         self.backend_selector = BackendSelector()
-        self.simulated_battery = 1.0 # Starts at 100%
+        self.simulated_battery = 1.0 
+        
+        # Track accuracy for reporting
+        self.accuracy_history = []
+        self.recent_acc = 1.0
 
     def train_step(self, x, y):
         # 1. Hardware Routing (Paper 3)
-        # Drain battery over time
         self.simulated_battery -= 0.005 
-        data_complexity = 0.9 if self.drift_detected else 0.4
+        data_complexity = 0.9 if len(self.drift_detector.window) < 5 else 0.4
         
         optimal_backend = self.backend_selector.select_backend(
             current_circuit_depth=self.model.n_layers, 
             data_complexity=data_complexity,
             battery_level=self.simulated_battery
         )
-        
-        # If mapping to Qiskit Aer/IBMQ
-        target_qml_backend = "default.qubit"
-        if optimal_backend == "qpu_cloud":
-            target_qml_backend = "qiskit.ibmq"
-        elif optimal_backend == "qpu_local":
-            target_qml_backend = "qiskit.aer"
-            
-        if self.model.backend != target_qml_backend:
-            print(f"[BackendSelector] Routing execution to: {optimal_backend} (Battery: {self.simulated_battery:.2f})")
-            # In a real run, switching dynamically per batch is expensive, but conceptually valid.
-            # self.model.switch_backend(target_qml_backend) # Disabled in simulation for speed
         
         # 2. Forward & Backward Pass
         self.model.train()
@@ -58,37 +49,37 @@ class AdaptiveEngine:
         
         preds = torch.sign(out)
         acc = (preds == y).float().mean().item()
-        
         self.accuracy_history.append(acc)
-        if len(self.accuracy_history) > self.window_size:
-            self.accuracy_history.pop(0)
-            
-        self._detect_and_adapt()
         
+        # For ADWIN, we pass error rate
+        error_rate = 1.0 - acc
+        self.recent_acc = (self.recent_acc * 0.9) + (acc * 0.1) # EMA
+        
+        # 3. Detect Drift & Adapt
+        drift_found = self.drift_detector.add_element(error_rate)
+        
+        if drift_found:
+            self._adapt()
+            
         return loss.item(), acc
 
-    def _detect_and_adapt(self):
-        if len(self.accuracy_history) == self.window_size:
-            avg_acc = np.mean(self.accuracy_history)
+    def _adapt(self):
+        print(f"[AdaptiveEngine {'SAFE' if self.is_safe_mode else 'UNSAFE'}] ADWIN Drift detected! Recent Acc: {self.recent_acc:.2f}.")
+        
+        mutation_safe = True
+        if self.is_safe_mode and self.causal_twin is not None:
+            # Need to pass n_qubits
+            n_qubits = getattr(self.model, 'n_qubits', 3)
+            mutation_safe = self.causal_twin.evaluate_mutation(self.model.n_layers, n_qubits, "add_layer")
             
-            if avg_acc < 0.60 and not self.drift_detected:
-                print(f"[AdaptiveEngine {'SAFE' if self.is_safe_mode else 'UNSAFE'}] Drift detected! Avg Acc: {avg_acc:.2f}.")
+        if mutation_safe:
+            print(f" -> Deploying Mutation (Adding Layer).")
+            if hasattr(self.model, 'add_layer'):
+                self.model.add_layer()
+                self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
+        else:
+            print(f" -> Mutation blocked by Causal Twin SCM. Adapting via LR decay.")
+            for g in self.optimizer.param_groups:
+                g['lr'] = 0.01
                 
-                mutation_safe = True
-                if self.is_safe_mode and self.causal_twin is not None:
-                    mutation_safe = self.causal_twin.evaluate_mutation(self.model.n_layers, "add_layer")
-                    
-                if mutation_safe:
-                    print(f" -> Deploying Mutation (Adding Layer).")
-                    self.model.add_layer()
-                    self.optimizer = optim.Adam(self.model.parameters(), lr=0.1)
-                else:
-                    print(f" -> Mutation blocked by Causal Twin. Adapting via Learning Rate decay instead.")
-                    for g in self.optimizer.param_groups:
-                        g['lr'] = 0.01
-                        
-                self.accuracy_history = []
-                self.drift_detected = True
-                
-            elif avg_acc > 0.80:
-                self.drift_detected = False
+        self.drift_detector.reset()

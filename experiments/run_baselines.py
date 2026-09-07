@@ -37,31 +37,26 @@ def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
     # Initialize Models
     if method_name == "EvoQAI":
         model = AdaptiveVQC(n_qubits=3, n_layers=1)
-        engine = AdaptiveEngine(model, lr=0.1, window_size=20, is_safe_mode=False) # Phase 1 focus
+        engine = AdaptiveEngine(model, lr=0.1, is_safe_mode=False) # Phase 1 focus
     elif method_name == "Static VQC":
         model = AdaptiveVQC(n_qubits=3, n_layers=1)
-        # Override detect_and_adapt to do nothing
-        engine = AdaptiveEngine(model, lr=0.1, window_size=20)
-        engine._detect_and_adapt = lambda: None 
+        # Override adapt to do nothing
+        engine = AdaptiveEngine(model, lr=0.1)
+        engine._adapt = lambda: None 
     elif method_name == "Static MLP":
         model = ClassicalMLP()
-        engine = AdaptiveEngine(model, lr=0.05, window_size=20)
-        engine._detect_and_adapt = lambda: None
+        engine = AdaptiveEngine(model, lr=0.05)
+        engine._adapt = lambda: None
     elif method_name == "MLP + ADWIN(Retrain)":
         model = ClassicalMLP()
-        engine = AdaptiveEngine(model, lr=0.05, window_size=20)
+        engine = AdaptiveEngine(model, lr=0.05)
         # Override to reset weights on drift
         def reset_mlp():
-            if len(engine.accuracy_history) == engine.window_size:
-                if np.mean(engine.accuracy_history) < 0.60 and not engine.drift_detected:
-                    # Retrain from scratch
-                    engine.model = ClassicalMLP()
-                    engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
-                    engine.accuracy_history = []
-                    engine.drift_detected = True
-                elif np.mean(engine.accuracy_history) > 0.80:
-                    engine.drift_detected = False
-        engine._detect_and_adapt = reset_mlp
+            # Retrain from scratch
+            engine.model = ClassicalMLP()
+            engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
+            engine.drift_detector.reset()
+        engine._adapt = reset_mlp
 
     accuracies = []
     
