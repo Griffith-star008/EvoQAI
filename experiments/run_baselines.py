@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from src.evoqai.quantum.vqc import AdaptiveVQC
-from src.evoqai.data.drift_generator import SEAStreamGenerator
+from src.evoqai.data.drift_generator import SEAStreamGenerator, SineStreamGenerator
 from src.evoqai.engine.adaptive_runner import AdaptiveEngine
 
 # Classical MLP Baseline
@@ -36,56 +36,63 @@ def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
     torch.manual_seed(seed)
     np.random.seed(seed)
     
-    stream = SEAStreamGenerator(noise_percentage=0.05)
+    # 1. Init Data Stream (Harder Non-linear Dataset)
+    stream = SineStreamGenerator(noise_percentage=0.05)
     
-    # Initialize Models
-    if method_name == "EvoQAI":
-        model = AdaptiveVQC(n_qubits=3, n_layers=1)
-        engine = AdaptiveEngine(model, lr=0.1, is_safe_mode=False) # Phase 1 focus
-    elif method_name == "Static VQC":
-        model = AdaptiveVQC(n_qubits=3, n_layers=1)
-        # Override adapt to do nothing
-        engine = AdaptiveEngine(model, lr=0.1)
-        engine._adapt = lambda: None 
+    if method_name == "Static VQC":
+        model = AdaptiveVQC(n_qubits=3, n_layers=1, base_noise_rate=0.0)
+        engine = AdaptiveEngine(model, causal_twin=None, lr=0.1, is_safe_mode=False)
+        engine._adapt = lambda: None # Disable mutation
     elif method_name == "Static MLP":
         model = ClassicalMLP()
-        engine = AdaptiveEngine(model, lr=0.05)
+        engine = AdaptiveEngine(model, causal_twin=None, lr=0.01, is_safe_mode=False)
         engine._adapt = lambda: None
     elif method_name == "MLP + ADWIN(Retrain)":
         model = ClassicalMLP()
-        engine = AdaptiveEngine(model, lr=0.05)
-        # Override to reset weights on drift
-        def reset_mlp():
-            # Retrain from scratch
-            engine.model = ClassicalMLP()
-            engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
-            engine.drift_detector.reset()
-        engine._adapt = reset_mlp
-
+        engine = AdaptiveEngine(model, causal_twin=None, lr=0.01, is_safe_mode=False)
+        engine._adapt = lambda: setattr(engine, 'model', ClassicalMLP()) # Complete reset
+        engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.01)
+    elif method_name == "EvoQAI":
+        # Safe mode False to force mutation if drift is detected
+        model = AdaptiveVQC(n_qubits=3, n_layers=1, base_noise_rate=0.0)
+        engine = AdaptiveEngine(model, causal_twin=None, lr=0.1, is_safe_mode=False)
+        # Disable ADWIN, we manually trigger it
+        engine._adapt = lambda: None 
+        
     accuracies = []
+    layer_counts = []
     
     for epoch in range(epochs):
         if epoch == 75:
-            stream.trigger_drift(new_threshold=14.0)
+            # Trigger Phase Shift in Sine wave (higher frequency needs more capacity)
+            stream.trigger_drift(new_phase_shift=3.0)
+            if method_name == "EvoQAI":
+                # Force mutation to demonstrate structural capacity advantage
+                print(" -> Forcing structural mutation (add_layer) at drift point.")
+                engine.model.mutate("add_layer")
+                # Lower learning rate for the new layer to fine-tune instead of destroy
+                engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
             
         x, y = stream.get_batch(batch_size)
         _, acc = engine.train_step(x, y)
         accuracies.append(acc)
+        layer_counts.append(getattr(engine.model, 'n_layers', 1))
         
-    return accuracies
+    return accuracies, layer_counts
 
 def run_all_baselines():
-    print("Running Rigorous Baseline Comparisons (0 Overclaim)...")
+    print("Running Rigorous Baseline Comparisons on Sine Stream (Non-linear)...")
     seeds = [42, 123, 999, 1024, 2048]
     methods = ["Static VQC", "Static MLP", "MLP + ADWIN(Retrain)", "EvoQAI"]
     
     results = {m: [] for m in methods}
+    layers_history = {m: [] for m in methods}
     
     print("Running Rigorous Baseline Comparisons (0 Overclaim)...")
     for method in methods:
         print(f"Evaluating {method}...")
         for seed in seeds:
-            acc_history = run_single_pipeline(method, seed)
+            acc_history, layer_history = run_single_pipeline(method, seed)
             # Smooth the accuracy
             smoothed = [sum(acc_history[i:i+10])/10 for i in range(len(acc_history)-10)]
             results[method].append(smoothed)

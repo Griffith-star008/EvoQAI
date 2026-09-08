@@ -79,6 +79,9 @@ class AdaptiveVQC(nn.Module):
         # Vectorized batch execution using list comprehension / torch.stack for performance
         # (Native PennyLane broadcasting can be unstable across different QPUs)
         outputs = torch.stack([self.qnode(x_i, self.weights) for x_i in x])
+        
+        # Ensure float32 to avoid autograd type mismatch
+        outputs = outputs.to(torch.float32)
             
         fidelity = (1.0 - self.base_noise_rate) ** self.n_layers
         outputs = outputs * fidelity
@@ -86,10 +89,15 @@ class AdaptiveVQC(nn.Module):
         return outputs
 
     def add_layer(self):
-        """Standard Phase 1 mutation: Add parameterized entanglement layer."""
-        new_weights = nn.Parameter(torch.randn(1, self.n_qubits, 3) * 0.1)
+        """Standard Phase 1 mutation: Add parameterized entanglement layer.
+        Warm-start with identity (zeros) so that the mutation does not destroy prior learned patterns.
+        """
+        new_weights = nn.Parameter(torch.zeros(1, self.n_qubits, 3))
         self.weights = nn.Parameter(torch.cat([self.weights, new_weights], dim=0))
         self.n_layers += 1
+        # Recreate QNode to prevent adjoint differentiation caching bugs when shape changes
+        diff_method = "adjoint" if self.backend == "default.qubit" else "parameter-shift"
+        self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method=diff_method)
         
     def reinitialize_layer(self, layer_idx=None):
         """Structural reset mutation: Reset a layer to jump out of barren plateaus."""
