@@ -76,10 +76,9 @@ class AdaptiveVQC(nn.Module):
         return qml.expval(qml.PauliZ(0))
 
     def forward(self, x):
-        batch_size = x.shape[0]
-        outputs = torch.zeros(batch_size, device=x.device)
-        for i in range(batch_size):
-            outputs[i] = self.qnode(x[i], self.weights)
+        # Vectorized batch execution using list comprehension / torch.stack for performance
+        # (Native PennyLane broadcasting can be unstable across different QPUs)
+        outputs = torch.stack([self.qnode(x_i, self.weights) for x_i in x])
             
         fidelity = (1.0 - self.base_noise_rate) ** self.n_layers
         outputs = outputs * fidelity

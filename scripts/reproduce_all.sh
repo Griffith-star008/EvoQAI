@@ -13,6 +13,8 @@ pytest tests/
 
 echo "[3/4] Running Paper 1 & 2 Core Experiments (Evolution & Causal Twin)..."
 python experiments/run_paper1_drift.py
+echo "Running Rigorous Baselines (5 Seeds)..."
+python experiments/run_baselines.py
 echo "Running Phase 3: AIoT Routing..."
 python experiments/run_paper3_routing.py
 echo "----------------------------------------"

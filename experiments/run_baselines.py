@@ -27,6 +27,10 @@ class ClassicalMLP(nn.Module):
         )
     def forward(self, x):
         return self.net(x).squeeze(-1)
+        
+    def switch_backend(self, new_backend: str):
+        # Dummy for routing compatibility
+        self.backend = new_backend
 
 def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
     torch.manual_seed(seed)
@@ -71,8 +75,9 @@ def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
     return accuracies
 
 def run_all_baselines():
+    print("Running Rigorous Baseline Comparisons (0 Overclaim)...")
+    seeds = [42, 123, 999, 1024, 2048]
     methods = ["Static VQC", "Static MLP", "MLP + ADWIN(Retrain)", "EvoQAI"]
-    seeds = [42, 123, 999]
     
     results = {m: [] for m in methods}
     
@@ -116,11 +121,26 @@ def run_all_baselines():
     
     plt.savefig('experiments/reports/baseline_comparison.png')
     
-    with open('experiments/reports/baseline_metrics.json', 'w') as f:
-        json.dump(summary_data, f, indent=4)
-        
     print("\nBenchmark complete! Artifacts saved to experiments/reports/")
     print(json.dumps(summary_data, indent=4))
-
+    
+    # Statistical Test (Paired T-test on Mean Accuracy)
+    import scipy.stats as stats
+    # results[method] contains a list of arrays (one per seed). Each array has length 150.
+    # Drift happens at epoch 75. We want post-drift mean accuracy per seed.
+    evoqai_accs = [np.mean(results["EvoQAI"][i][75:]) for i in range(len(seeds))]
+    static_vqc_accs = [np.mean(results["Static VQC"][i][75:]) for i in range(len(seeds))]
+    
+    t_stat, p_val = stats.ttest_rel(evoqai_accs, static_vqc_accs)
+    
+    summary_data["Statistical_Test (EvoQAI vs Static VQC)"] = {
+        "t_statistic": float(t_stat),
+        "p_value": float(p_val),
+        "significant_at_0_05": bool(p_val < 0.05)
+    }
+    
+    with open("experiments/reports/baseline_metrics.json", "w") as f:
+        json.dump(summary_data, f, indent=4)
+        
 if __name__ == "__main__":
     run_all_baselines()

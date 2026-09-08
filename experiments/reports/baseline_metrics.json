@@ -1,18 +1,23 @@
 {
     "Static VQC": {
-        "mean_accuracy_post_drift": 0.7326602564102564,
-        "recovery_time_epochs": 12
+        "mean_accuracy_post_drift": 0.7473653846153846,
+        "recovery_time_epochs": 10
     },
     "Static MLP": {
-        "mean_accuracy_post_drift": 0.8669230769230768,
+        "mean_accuracy_post_drift": 0.8424807692307693,
         "recovery_time_epochs": 1
     },
     "MLP + ADWIN(Retrain)": {
-        "mean_accuracy_post_drift": 0.8669230769230768,
+        "mean_accuracy_post_drift": 0.8424807692307693,
         "recovery_time_epochs": 1
     },
     "EvoQAI": {
-        "mean_accuracy_post_drift": 0.7326602564102564,
-        "recovery_time_epochs": 12
+        "mean_accuracy_post_drift": 0.7473653846153846,
+        "recovery_time_epochs": 10
+    },
+    "Statistical_Test (EvoQAI vs Static VQC)": {
+        "t_statistic": NaN,
+        "p_value": NaN,
+        "significant_at_0_05": false
     }
 }

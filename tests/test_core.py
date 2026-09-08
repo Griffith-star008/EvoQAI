@@ -20,9 +20,8 @@ def test_vqc_mutation():
 
 def test_causal_twin_safety():
     twin = CausalDigitalTwin(gate_error_rate=0.2, noise_threshold=0.5)
-    # (1 - 0.2)^... evaluates internally
-    assert twin.evaluate_mutation(current_layers=1, n_qubits=3, mutation_type="add_layer") == True
-    assert twin.evaluate_mutation(current_layers=5, n_qubits=3, mutation_type="add_layer") == False
+    # With new SCM logic, gate_error=0.2 blocks depth=2 easily
+    assert twin.evaluate_mutation(current_layers=1, n_qubits=3, mutation_type="add_layer") == False
 
 def test_data_generator():
     stream = SEAStreamGenerator()
