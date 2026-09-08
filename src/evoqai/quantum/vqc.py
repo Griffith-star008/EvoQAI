@@ -60,33 +60,36 @@ class AdaptiveVQC(nn.Module):
             self.qnode = qml.QNode(self._circuit, self.device, interface="torch", diff_method=diff_method)
 
     def _circuit(self, inputs, weights):
-        for i in range(self.n_qubits):
-            qml.RY(inputs[i], wires=i)
-            
+        # Data Re-uploading + Strong Entanglement
         for layer_idx in range(weights.shape[0]):
+            # 1. Data Encoding (Re-uploaded every layer)
+            for i in range(self.n_qubits):
+                qml.RY(inputs[i], wires=i)
+                
+            # 2. Entanglement Ring
             for i in range(self.n_qubits - 1):
                 qml.CNOT(wires=[i, i+1])
             qml.CNOT(wires=[self.n_qubits - 1, 0])
             
+            # 3. Parameterized Rotations
             for i in range(self.n_qubits):
                 qml.RZ(weights[layer_idx, i, 0], wires=i)
                 qml.RY(weights[layer_idx, i, 1], wires=i)
                 qml.RZ(weights[layer_idx, i, 2], wires=i)
                 
-        return qml.expval(qml.PauliZ(0))
+        # Return expectation values of all qubits
+        return [qml.expval(qml.PauliZ(i)) for i in range(self.n_qubits)]
 
     def forward(self, x):
-        # Vectorized batch execution using list comprehension / torch.stack for performance
-        # (Native PennyLane broadcasting can be unstable across different QPUs)
-        outputs = torch.stack([self.qnode(x_i, self.weights) for x_i in x])
+        # Vectorized batch execution
+        outputs_list = torch.stack([torch.stack(self.qnode(x_i, self.weights)) for x_i in x])
         
-        # Ensure float32 to avoid autograd type mismatch
+        # Aggregate across qubits (mean) to form final prediction
+        outputs = torch.mean(outputs_list, dim=-1)
+        
         outputs = outputs.to(torch.float32)
-            
         fidelity = (1.0 - self.base_noise_rate) ** self.n_layers
-        outputs = outputs * fidelity
-        
-        return outputs
+        return outputs * fidelity
 
     def add_layer(self):
         """Standard Phase 1 mutation: Add parameterized entanglement layer.

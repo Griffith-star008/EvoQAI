@@ -15,14 +15,16 @@ from src.evoqai.engine.adaptive_runner import AdaptiveEngine
 
 # Classical MLP Baseline
 class ClassicalMLP(nn.Module):
-    def __init__(self, input_dim=3, hidden_dim=8):
+    def __init__(self, input_dim=4, hidden_dim=32):
         super().__init__()
         self.n_layers = 1 # Dummy for engine compatibility
         self.backend = "cpu"
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(hidden_dim, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1),
             nn.Tanh() # Output in [-1, 1] to match VQC
         )
     def forward(self, x):
@@ -32,15 +34,15 @@ class ClassicalMLP(nn.Module):
         # Dummy for routing compatibility
         self.backend = new_backend
 
-def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
+def run_single_pipeline(method_name, seed, epochs=300, batch_size=16):
     torch.manual_seed(seed)
     np.random.seed(seed)
     
     # 1. Init Data Stream (Harder Non-linear Dataset)
-    stream = SineStreamGenerator(noise_percentage=0.05)
+    stream = SineStreamGenerator(noise_percentage=0.05, n_features=4)
     
     if method_name == "Static VQC":
-        model = AdaptiveVQC(n_qubits=3, n_layers=1, base_noise_rate=0.0)
+        model = AdaptiveVQC(n_qubits=4, n_layers=1, base_noise_rate=0.0)
         engine = AdaptiveEngine(model, causal_twin=None, lr=0.1, is_safe_mode=False)
         engine._adapt = lambda: None # Disable mutation
     elif method_name == "Static MLP":
@@ -54,24 +56,28 @@ def run_single_pipeline(method_name, seed, epochs=150, batch_size=16):
         engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.01)
     elif method_name == "EvoQAI":
         # Safe mode False to force mutation if drift is detected
-        model = AdaptiveVQC(n_qubits=3, n_layers=1, base_noise_rate=0.0)
+        model = AdaptiveVQC(n_qubits=4, n_layers=1, base_noise_rate=0.0)
         engine = AdaptiveEngine(model, causal_twin=None, lr=0.1, is_safe_mode=False)
         # Disable ADWIN, we manually trigger it
-        engine._adapt = lambda: None 
+        engine._adapt = lambda: None
         
     accuracies = []
     layer_counts = []
     
     for epoch in range(epochs):
-        if epoch == 75:
+        if epoch == 150:
             # Trigger Phase Shift in Sine wave (higher frequency needs more capacity)
             stream.trigger_drift(new_phase_shift=3.0)
             if method_name == "EvoQAI":
                 # Force mutation to demonstrate structural capacity advantage
                 print(" -> Forcing structural mutation (add_layer) at drift point.")
                 engine.model.mutate("add_layer")
-                # Lower learning rate for the new layer to fine-tune instead of destroy
-                engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
+                # Boost learning rate to 0.2 to quickly train the new zeros layer
+                engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.2)
+                
+        if epoch == 200 and method_name == "EvoQAI":
+            # Cool down learning rate after the new layer has grown
+            engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
             
         x, y = stream.get_batch(batch_size)
         _, acc = engine.train_step(x, y)

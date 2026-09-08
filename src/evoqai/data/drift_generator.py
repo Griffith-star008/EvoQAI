@@ -42,9 +42,10 @@ class SineStreamGenerator:
     Label = 1 if x2 < sin(x1 * phase_shift) else 0.
     Drift occurs by changing the phase_shift.
     """
-    def __init__(self, noise_percentage=0.05):
+    def __init__(self, noise_percentage=0.05, n_features=4):
         self.noise_percentage = noise_percentage
         self.phase_shift = 1.0
+        self.n_features = n_features
         
     def trigger_drift(self, new_phase_shift: float):
         self.phase_shift = new_phase_shift
@@ -57,9 +58,9 @@ class SineStreamGenerator:
         y[noise_idx] = 1 - y[noise_idx]
         
         X_scaled = X * np.pi
-        # Pad with 0 to match 3 qubits if needed, but we can just use 2 features for 2 qubits.
-        # For compatibility with 3-qubit VQC, we append a random or constant dimension
-        X_padded = np.zeros((batch_size, 3))
+        
+        # Pad with 0 to match n_features
+        X_padded = np.zeros((batch_size, self.n_features))
         X_padded[:, :2] = X_scaled
         
         y_scaled = y * 2 - 1
