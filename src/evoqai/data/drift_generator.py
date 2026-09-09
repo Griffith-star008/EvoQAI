@@ -56,12 +56,12 @@ class SineStreamGenerator:
         
         noise_idx = np.random.rand(batch_size) < self.noise_percentage
         y[noise_idx] = 1 - y[noise_idx]
-        
         X_scaled = X * np.pi
         
-        # Pad with 0 to match n_features
-        X_padded = np.zeros((batch_size, self.n_features))
-        X_padded[:, :2] = X_scaled
+        # Tile features to match n_features (e.g. [x1, x2] -> [x1, x2, x1, x2])
+        # This gives all qubits actual data instead of 0s
+        repeats = (self.n_features + 1) // 2
+        X_padded = np.tile(X_scaled, (1, repeats))[:, :self.n_features]
         
         y_scaled = y * 2 - 1
         return torch.tensor(X_padded, dtype=torch.float32), torch.tensor(y_scaled, dtype=torch.float32)

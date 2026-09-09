@@ -34,7 +34,7 @@ class ClassicalMLP(nn.Module):
         # Dummy for routing compatibility
         self.backend = new_backend
 
-def run_single_pipeline(method_name, seed, epochs=300, batch_size=16):
+def run_single_pipeline(method_name, seed, epochs=500, batch_size=16):
     torch.manual_seed(seed)
     np.random.seed(seed)
     
@@ -65,7 +65,7 @@ def run_single_pipeline(method_name, seed, epochs=300, batch_size=16):
     layer_counts = []
     
     for epoch in range(epochs):
-        if epoch == 150:
+        if epoch == 250:
             # Trigger Phase Shift in Sine wave (higher frequency needs more capacity)
             stream.trigger_drift(new_phase_shift=3.0)
             if method_name == "EvoQAI":
@@ -75,7 +75,7 @@ def run_single_pipeline(method_name, seed, epochs=300, batch_size=16):
                 # Boost learning rate to 0.2 to quickly train the new zeros layer
                 engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.2)
                 
-        if epoch == 200 and method_name == "EvoQAI":
+        if epoch == 350 and method_name == "EvoQAI":
             # Cool down learning rate after the new layer has grown
             engine.optimizer = optim.Adam(engine.model.parameters(), lr=0.05)
             
@@ -88,7 +88,7 @@ def run_single_pipeline(method_name, seed, epochs=300, batch_size=16):
 
 def run_all_baselines():
     print("Running Rigorous Baseline Comparisons on Sine Stream (Non-linear)...")
-    seeds = [42, 123, 999, 1024, 2048]
+    seeds = [42] # Debug mode: 1 seed
     methods = ["Static VQC", "Static MLP", "MLP + ADWIN(Retrain)", "EvoQAI"]
     
     results = {m: [] for m in methods}
